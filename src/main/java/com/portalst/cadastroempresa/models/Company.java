@@ -7,7 +7,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Empresa {
+public class Company {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,10 +17,8 @@ public class Empresa {
     private String cnpj;
     private String nomeFantasia;
     private String perfil;
-    
+
     @Enumerated(EnumType.STRING)
-    private StatusCadastro status;
-
-    private boolean usuarioInterno;
-
+    private StatusEnum status;
+    private boolean isExternalUser;
 }

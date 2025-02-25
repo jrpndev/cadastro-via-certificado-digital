@@ -21,7 +21,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").permitAll());
         return http.build();
     }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
