@@ -20,5 +20,9 @@ public class Company {
 
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
+
     private boolean isExternalUser;
+
+    private boolean directBilling;
+
 }

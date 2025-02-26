@@ -1,94 +1,131 @@
 <template>
-  <div class="cadastro-empresa">
-    <!-- Formulário de Cadastro -->
-    <h2>Cadastro de Empresa</h2>
-    <form @submit.prevent="handleSubmit">
-      <div class="form-group">
-        <label for="razao-social">Razão Social</label>
-        <input type="text" v-model="empresa.razaoSocial" id="razao-social" required />
-      </div>
+  <Header />
+  <div class="cadastro-empresa d-flex justify-content-center align-items-center">
+    <div class="form-container">
+      <h2 class="text-center mb-4">Cadastro de Empresa</h2>
 
-      <div class="form-group">
-        <label for="cnpj">CNPJ</label>
-        <input type="text" v-model="empresa.cnpj" id="cnpj" required />
-      </div>
+      <form @submit.prevent="handleSubmit">
+        <div class="form-group">
+          <label for="razao-social">Razão Social</label>
+          <input type="text" v-model="empresa.razaoSocial" id="razao-social" class="form-control" required />
+        </div>
 
-      <div class="form-group">
-        <label for="nome-fantasia">Nome Fantasia</label>
-        <input type="text" v-model="empresa.nomeFantasia" id="nome-fantasia" required />
-      </div>
+        <div class="form-group">
+          <label for="cnpj">CNPJ</label>
+          <input type="text" v-model="empresa.cnpj" id="cnpj" class="form-control" required />
+        </div>
 
-      <div class="form-group">
-        <label for="perfil">Perfil</label>
-        <select v-model="empresa.perfil" id="perfil" required>
-          <option value="empresa">Empresa</option>
-          <option value="freelancer">Freelancer</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="nome-fantasia">Nome Fantasia</label>
+          <input type="text" v-model="empresa.nomeFantasia" id="nome-fantasia" class="form-control" required />
+        </div>
 
-      <div class="form-group">
-        <label for="faturamento-direto">
-          <input type="checkbox" v-model="empresa.faturamentoDireto" id="faturamento-direto" />
-          Faturamento Direto
-        </label>
-      </div>
+        <div class="form-group">
+          <label for="perfil">Perfil</label>
+          <select v-model="empresa.perfil" id="perfil" class="form-control" required>
+            <option value="empresa">Empresa</option>
+            <option value="freelancer">Freelancer</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label for="documento-comprovante">Documento Comprovante</label>
-        <input type="file" @change="handleFileChange" id="documento-comprovante" />
-      </div>
-
-      <button type="submit" class="btn btn-primary">Salvar</button>
-    </form>
+        <div class="form-group form-check">
+          <input type="checkbox" v-model="empresa.faturamentoDireto" id="faturamento-direto" class="form-check-input" />
+          <label class="form-check-label" for="faturamento-direto">Faturamento Direto</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Salvar</button>
+      </form>
+    </div>
 
     <div v-if="showModal" class="modal">
       <div class="modal-content">
-        <h3>Cadastro realizado com sucesso!</h3>
-        <button @click="closeModal">Fechar</button>
+        <h3>{{ modalMessage }}</h3>
+        <button class="btn btn-success mt-3" @click="closeModal">Fechar</button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import httpClient from '../network/index.js'
+import Header from './Header.vue'
+import router from '../router'
 
 export default {
   name: 'CadastroEmpresa',
-  setup () {
-    const empresa = ref({
-      razaoSocial: '',
-      cnpj: '',
-      nomeFantasia: '',
-      perfil: 'empresa',
-      faturamentoDireto: false,
-      documentoComprovante: null
-    })
-
-    const showModal = ref(false)
-
-    const handleFileChange = (event) => {
-      const target = event.target
-      if (target && target.files) {
-        empresa.value.documentoComprovante = target.files[0]
-      }
-    }
-
-    const handleSubmit = () => {
-      showModal.value = true
-    }
-
-    const closeModal = () => {
-      showModal.value = false
-      window.location.href = '/dashboard'
-    }
-
+  components: {
+    Header
+  },
+  data () {
     return {
-      empresa,
-      showModal,
-      handleFileChange,
-      handleSubmit,
-      closeModal
+      empresa: {
+        razaoSocial: '',
+        cnpj: '',
+        nomeFantasia: '',
+        perfil: 'empresa',
+        faturamentoDireto: false
+      },
+      showModal: false,
+      modalMessage: ''
+    }
+  },
+  methods: {
+    decodeJWT (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        return payload.userType === 'EXTERNO'
+      } catch (error) {
+        console.error('Erro ao decodificar JWT:', error)
+        return false
+      }
+    },
+
+    async handleSubmit () {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          throw new Error('Usuário não autenticado')
+        }
+
+        const isExternalUser = this.decodeJWT(token)
+
+        const payload = {
+          razaoSocial: this.empresa.razaoSocial,
+          cnpj: this.empresa.cnpj,
+          nomeFantasia: this.empresa.nomeFantasia,
+          perfil: this.empresa.perfil,
+          directBilling: this.empresa.faturamentoDireto,
+          isExternalUser: isExternalUser
+        }
+
+        // Envia a requisição POST para o backend
+        const response = await httpClient.post('/companies', payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (response) {
+          this.modalMessage = 'Cadastro realizado com sucesso!'
+          this.showModal = true
+
+          // Redireciona após 2 segundos
+          setTimeout(() => {
+            this.closeModal()
+            router.push('/home-page') // Redireciona para a página inicial
+          }, 2000)
+        } else {
+          throw new Error('Falha ao cadastrar a empresa')
+        }
+      } catch (error) {
+        console.error('Erro ao cadastrar empresa:', error)
+        this.modalMessage = 'Erro ao cadastrar empresa. Tente novamente.'
+        this.showModal = true
+      }
+    },
+
+    closeModal () {
+      this.showModal = false
     }
   }
 }
@@ -96,15 +133,16 @@ export default {
 
 <style scoped>
 .cadastro-empresa {
-  padding: 20px;
+  height: 100vh;
+  background-color: #f8f9fa;
 }
 
-.form-group {
-  margin-bottom: 10px;
-}
-
-button {
-  margin-top: 10px;
+.form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  width: 400px;
 }
 
 .modal {
@@ -127,6 +165,6 @@ button {
 }
 
 .modal button {
-  margin-top: 10px;
+  width: 100%;
 }
 </style>

@@ -25,6 +25,9 @@
 </template>
 
 <script>
+import httpClient from '../network/index.js'
+import router from '../router/index.js' // Importando o router diretamente
+
 export default {
   data () {
     return {
@@ -37,10 +40,14 @@ export default {
   methods: {
     async handleSubmit () {
       try {
-        const response = await this.$axios.post('/api/login', this.user)
-        const token = response.data.token
-        this.$store.dispatch('login', token)
-        this.$router.push({ name: 'list-companies' })
+        const response = await httpClient.post('/users/login', this.user)
+        const token = response.token
+        if (token) {
+          localStorage.setItem('token', token)
+          router.push({ name: 'list-companies' })
+        } else {
+          console.error('Erro: Nenhum token recebido')
+        }
       } catch (error) {
         console.error('Erro ao fazer login:', error)
       }

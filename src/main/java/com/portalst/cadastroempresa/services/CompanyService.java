@@ -16,9 +16,9 @@ public class CompanyService {
 
     public Company save(Company company) {
         if (company.isExternalUser()) {
-            company.setStatus(StatusEnum.APPROVED);
-        } else {
             company.setStatus(StatusEnum.PENDING);
+        } else {
+            company.setStatus(StatusEnum.APPROVED);
         }
         return baseRepository.save(company);
     }
