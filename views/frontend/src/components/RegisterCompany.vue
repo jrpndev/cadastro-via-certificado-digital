@@ -46,7 +46,6 @@
 </template>
 
 <script>
-import httpClient from '../network/index.js'
 import Header from './Header.vue'
 import router from '../router'
 
@@ -70,13 +69,8 @@ export default {
   },
   methods: {
     decodeJWT (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        return payload.userType === 'EXTERNO'
-      } catch (error) {
-        console.error('Erro ao decodificar JWT:', error)
-        return false
-      }
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      return payload.userType
     },
 
     async handleSubmit () {
@@ -85,34 +79,32 @@ export default {
         if (!token) {
           throw new Error('Usuário não autenticado')
         }
-
         const isExternalUser = this.decodeJWT(token)
-
         const payload = {
           razaoSocial: this.empresa.razaoSocial,
           cnpj: this.empresa.cnpj,
           nomeFantasia: this.empresa.nomeFantasia,
           perfil: this.empresa.perfil,
           directBilling: this.empresa.faturamentoDireto,
-          isExternalUser: isExternalUser
+          isExternalUser: isExternalUser === 'EXTERNO'
         }
 
-        // Envia a requisição POST para o backend
-        const response = await httpClient.post('/companies', payload, {
+        const response = await fetch('http://localhost:5000/api/companies', {
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify(payload)
         })
 
-        if (response) {
+        if (response.ok) {
           this.modalMessage = 'Cadastro realizado com sucesso!'
           this.showModal = true
 
-          // Redireciona após 2 segundos
           setTimeout(() => {
             this.closeModal()
-            router.push('/home-page') // Redireciona para a página inicial
+            router.push('/home-page')
           }, 2000)
         } else {
           throw new Error('Falha ao cadastrar a empresa')

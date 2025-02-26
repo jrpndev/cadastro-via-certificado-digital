@@ -1,0 +1,15 @@
+FROM node:22.14.0
+
+WORKDIR /app
+
+COPY views/frontend/package*.json ./
+
+RUN npm install --force
+
+COPY views/frontend/ .
+
+RUN npm run build
+
+EXPOSE 8080
+
+CMD ["npm", "run", "serve"]

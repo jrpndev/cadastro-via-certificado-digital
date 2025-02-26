@@ -15,13 +15,14 @@ public class CompanyService {
     private BaseRepository baseRepository;
 
     public Company save(Company company) {
-        if (company.isExternalUser()) {
+        if (company.isExternalUser == true) {
             company.setStatus(StatusEnum.PENDING);
         } else {
             company.setStatus(StatusEnum.APPROVED);
         }
         return baseRepository.save(company);
     }
+    
 
     public List<Company> list() {
         return baseRepository.findAll();

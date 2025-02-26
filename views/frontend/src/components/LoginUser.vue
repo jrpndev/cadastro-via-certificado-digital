@@ -21,12 +21,19 @@
         <router-link to="/register-user" class="btn btn-secondary">Criar Conta</router-link>
       </div>
     </div>
+    <div v-if="showErrorModal" class="modal">
+      <div class="modal-content">
+        <h3>Erro ao realizar o login</h3>
+        <p>{{ errorMessage }}</p>
+        <button class="btn btn-danger mt-3" @click="closeErrorModal">Fechar</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import httpClient from '../network/index.js'
-import router from '../router/index.js' // Importando o router diretamente
+import router from '../router/index.js'
 
 export default {
   data () {
@@ -34,7 +41,9 @@ export default {
       user: {
         email: '',
         password: ''
-      }
+      },
+      showErrorModal: false,
+      errorMessage: ''
     }
   },
   methods: {
@@ -42,15 +51,23 @@ export default {
       try {
         const response = await httpClient.post('/users/login', this.user)
         const token = response.token
+
         if (token) {
           localStorage.setItem('token', token)
           router.push({ name: 'list-companies' })
         } else {
-          console.error('Erro: Nenhum token recebido')
+          this.showError('Erro: Nenhum token recebido')
         }
       } catch (error) {
-        console.error('Erro ao fazer login:', error)
+        this.showError('Erro ao fazer login. Verifique suas credenciais.')
       }
+    },
+    showError (message) {
+      this.errorMessage = message
+      this.showErrorModal = true
+    },
+    closeErrorModal () {
+      this.showErrorModal = false
     }
   }
 }
@@ -122,5 +139,28 @@ h2 {
 .btn-secondary:hover {
   background-color: #5a6268;
   border-color: #545b62;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.modal button {
+  width: 100%;
 }
 </style>

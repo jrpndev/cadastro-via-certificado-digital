@@ -15,6 +15,38 @@ services:
     networks:
       - app-network
 
+  cadastro-empresa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cadastro-empresa
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL}
+      SPRING_JPA_PROPERTIES_HIBERNATE_USE_SQL_COMMENTS: ${SPRING_JPA_PROPERTIES_HIBERNATE_USE_SQL_COMMENTS}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    environment:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cadastro-empresa
+
 volumes:
   postgres_data:
 
